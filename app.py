@@ -9,6 +9,7 @@ import string
 import hashlib
 import threading
 import time
+import json
 
 from plugin_search_interface import PluginSearchBase
 from plugin_download_interface import PluginDownloadBase
@@ -22,9 +23,9 @@ FLASK_PORT = os.environ.get("FLASK_RUN_PORT", "10000")
 FLASK_HOST = os.environ.get("FLASK_RUN_HOST", "0.0.0.0")
 PLUGIN_SEARCH_DIR = os.path.join(CONFIG_DIR, "plugins","search")
 PLUGIN_DOWNLOAD_DIR = os.path.join(CONFIG_DIR, "plugins","download")
-DOWNLOAD_DIR = "/data/downloads/downloadarr"
-SAB_API = "abcde"
-SAB_CATEGORIES = ["lidarr"]
+DOWNLOAD_DIR = "/data/usenet/complete"
+SAB_API = None
+SAB_CATEGORIES = ["books","music","audiobooks"]
 
 # array holding plugins
 search_plugins = []
@@ -36,6 +37,7 @@ app = Flask(__name__)
 
 # load all the search plugins
 def load_search_plugins(search_plugin_directory):
+    global search_plugins
     search_plugins = []
     sys.path.insert(0, search_plugin_directory)
     print("Loading search plugins from:" + search_plugin_directory)
@@ -56,7 +58,8 @@ def load_search_plugins(search_plugin_directory):
     return search_plugins
 
 def load_download_plugins(download_plugin_directory):
-    download_plugins = []    
+    global download_plugins
+    download_plugins = []
     sys.path.insert(0, download_plugin_directory)
     print("Loading download plugins from:" + download_plugin_directory)
 
@@ -118,11 +121,17 @@ def start():
         DOWNLOAD_DIR = config.get("download_directory", DOWNLOAD_DIR)
         SAB_API = config.get("sab_api", SAB_API)
         SAB_CATEGORIES = config.get("sab_categories", SAB_CATEGORIES)
+        
+        # Validate if SAB_API is still set to the default 'abcde'
+        if SAB_API == 'abcde':
+            print("Warning: API key is set to the default value 'abcde'. Please update your configuration.")
+        elif SAB_API == '':
+            print("Warning: API key value is empty. Please update your configuration.")
+            
     #load search plugins
     global search_plugins
     global download_plugins
     global sabqueue
-    print("Going to load search plugins")
     print("Going to load search plugins")
     search_plugins = load_search_plugins(PLUGIN_SEARCH_DIR)
     download_plugins = load_download_plugins(PLUGIN_DOWNLOAD_DIR)
@@ -361,13 +370,49 @@ def api():
             else:
                 return sabgethistory(sabqueue)
         return jsonify({"error": "Access Denied"}), 403
+        
+    elif request.args.get("mode") == 'widget':
+        if SAB_API == request.args.get("apikey"):
+            # Check if sabqueue is empty and return default counts
+            if not sabqueue:  # If queue is empty
+                return jsonify({
+                    "downloading": 0,
+                    "queued": 0,
+                    "failed": 0
+                })
+
+            # Initialize counts for downloading, queued, and failed
+            downloading_count = 0
+            queued_count = 0
+            failed_count = 0
+
+            # Loop through the slots in the queue and count based on status
+            for slot in sabqueue:
+                status = slot.get('status', '')  # Safe check for missing 'status' key
+                if status == 'Downloading':
+                    downloading_count += 1
+                elif status == 'Queued':
+                    queued_count += 1
+                elif status == 'Failed':
+                    failed_count += 1
+
+            # Prepare the response structure
+            response = {
+                "downloading": downloading_count,
+                "queued": queued_count,
+                "failed": failed_count,
+            }
+
+            return jsonify(response)
+
+        return jsonify({"error": "Access Denied"}), 403        
     
 download_thread = threading.Thread(target=run_download_queue)
 download_thread.daemon = True  # Ensures the thread stops when the program ends
 download_thread.start()
 
 if __name__ == "__main__":
-    # load configs and plugins
+    # load config and plugins
     start()
-    # start flask
-    app.run(host=FLASK_HOST, port=FLASK_PORT)
+    threading.Thread(target=run_download_queue, daemon=True).start()
+    app.run(host=FLASK_HOST, port=int(FLASK_PORT))

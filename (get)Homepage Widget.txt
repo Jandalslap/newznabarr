@@ -1,0 +1,25 @@
+- An API endpoint exists for a custom api widget for Homepage. Use the below in services.yaml
+
+    - newznabarr:
+        icon: https://media.licdn.com/dms/image/v2/D5612AQGgaUhfRZ8MMQ/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1682975314473?e=2147483647&v=beta&t=Vzhm0a1oTdYBR4H_ulMpVcq0yiLolHRC6YiB8c2_knY # Placeholder
+        href: http://<IP>:10000/queue # Can use subdomain if behind reverse proxy
+        #target: _self
+        ping: http://newznabarr:10000 # Docker internal address if on the same docker network. Or use your IP and port
+        statusStyle: "dot"
+        description: download plugin
+        widget:
+            type: customapi
+            url: http://newznabarr:10000/api?mode=widget&apikey=<API_KEY>> # Docker internal address if on the same docker network. Or use your IP and port
+            refreshInterval: 10000 # Refresh every 10 seconds
+            method: GET
+            display: block
+            mappings:
+                - field: downloading
+                  label: Downloading
+                  format: number
+                - field: queued
+                  label: Queued
+                  format: number
+                - field: failed
+                  label: Failed
+                  format: number

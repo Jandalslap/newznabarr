@@ -1,5 +1,5 @@
 {
-  "download_directory": "/data/downloads/downloadarr",
+  "download_directory": "/data/usenet/complete",
   "sab_api": "abcde",
-  "sab_categories": ["readarr", "lidarr", "sonarr", "lidarr_audiobook"]
+  "sab_categories": ["books", "music", "audiobooks"]
 }

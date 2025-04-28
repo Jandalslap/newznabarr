@@ -47,7 +47,7 @@ Let me know what you think, and if you have any ideas for additional plugins, a 
   - For Unraid, set `PUID` to `99` and `PGID` to `100`.
 - **Download Folder**:
   - Add a download folder that matches your setup and update the `config.json` file to reflect this folder.
-  - **Note**: The default path is still using the old name `/data/downloads/downloadarr` (this will be updated in future versions).
+  - **Note**: The default path is based on Trash guides folder structure `/data/usenet/complete`.
 
 ---
 
@@ -84,4 +84,9 @@ Let me know what you think, and if you have any ideas for additional plugins, a 
 ## Additional Information
 
 - For more advanced configurations, or if you need to modify the default behavior, check the `config.json` file.
+- (get)Homepage Widget for services.yaml available -- see txt file.
+- SWAG Reverse Proxy example confs available -- see sample files.
 - Stay tuned for upcoming features, including more plugin support and enhancements!
+
+
+
